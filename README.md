@@ -2,4 +2,4 @@
 
 Testing Notion API + Gastby
 
-DEMO: arnaskro.github.io/notion-gatsby
+[DEMO](arnaskro.github.io/notion-gatsby)
