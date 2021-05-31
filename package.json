@@ -1,13 +1,14 @@
 {
-  "name": "gatsby-starter-leonids",
+  "name": "notion-gatsby",
   "private": true,
-  "description": "A starter for a blog powered by Gatsby and Markdown",
+  "description": "A simple, test site using Notion APi",
   "version": "0.1.0",
-  "author": "Renyuan Zou <zourenyuan@gmail.com>",
+  "author": "Arnas Kromelis <arnas.kromelis@gmail.com>",
   "bugs": {
-    "url": "https://github.com/renyuanz/leonids/issues"
+    "url": "https://github.com/arnaskro/notion-gatsby/issues"
   },
   "dependencies": {
+    "axios": "^0.21.1",
     "gatsby": "^2.24.47",
     "gatsby-image": "^2.4.16",
     "gatsby-plugin-dark-mode": "^1.1.2",
@@ -42,7 +43,7 @@
     "prettier": "2.0.5",
     "tailwindcss": "^1.6.2"
   },
-  "homepage": "https://github.com/renyuanz/leonids#readme",
+  "homepage": "https://github.com/arnaskro/notion-gatsby#readme",
   "keywords": [
     "gatsby"
   ],
@@ -50,7 +51,7 @@
   "main": "n/a",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/renyuanz/leonids.git"
+    "url": "git+https://github.com/arnaskro/notion-gatsby.git"
   },
   "scripts": {
     "build": "gatsby build",

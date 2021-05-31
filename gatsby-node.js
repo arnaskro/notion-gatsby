@@ -1,25 +1,21 @@
 const path = require(`path`)
+const axios = require(`axios`)
 const { createFilePath } = require(`gatsby-source-filesystem`)
 
 exports.createPages = async ({ graphql, actions }) => {
   const { createPage } = actions
 
-  const blogPost = path.resolve(`./src/templates/blog-post.js`)
+  const postTemplate = path.resolve(`./src/templates/post.js`)
   const result = await graphql(
     `
       {
-        allMarkdownRemark(
-          sort: { fields: [frontmatter___date], order: DESC }
-          limit: 1000
-        ) {
+        allNotionPage(limit: 1000) {
           edges {
             node {
               fields {
                 slug
               }
-              frontmatter {
-                title
-              }
+              title
             }
           }
         }
@@ -32,37 +28,15 @@ exports.createPages = async ({ graphql, actions }) => {
   }
 
   // Create blog posts pages.
-  const posts = result.data.allMarkdownRemark.edges
+  const posts = result.data.allNotionPage.edges
 
   posts.forEach((post, index) => {
-    const previous = index === posts.length - 1 ? null : posts[index + 1].node
-    const next = index === 0 ? null : posts[index - 1].node
-
     createPage({
       path: post.node.fields.slug,
-      component: blogPost,
+      component: postTemplate,
       context: {
-        slug: post.node.fields.slug,
-        previous,
-        next,
-      },
-    })
-  })
-
-  // Create blog post list pages
-  const postsPerPage = 5
-  const numPages = Math.ceil(posts.length / postsPerPage)
-
-  Array.from({ length: numPages }).forEach((_, i) => {
-    createPage({
-      path: i === 0 ? `/` : `/${i + 1}`,
-      component: path.resolve("./src/templates/blog-list.tsx"),
-      context: {
-        limit: postsPerPage,
-        skip: i * postsPerPage,
-        numPages,
-        currentPage: i + 1,
-      },
+        slug: post.node.fields.slug
+      }
     })
   })
 }
@@ -70,12 +44,68 @@ exports.createPages = async ({ graphql, actions }) => {
 exports.onCreateNode = ({ node, actions, getNode }) => {
   const { createNodeField } = actions
 
-  if (node.internal.type === `MarkdownRemark`) {
-    const value = createFilePath({ node, getNode })
+  if (node.internal.type === `NotionPage`) {
     createNodeField({
       name: `slug`,
       node,
-      value,
+      value: node.path
     })
+  }
+}
+
+exports.sourceNodes = async ({ actions, createNodeId, createContentDigest }) => {
+  if (!process.env.GATSBY_APP_NOTION_DB_ID || !process.env.GATSBY_APP_NOTION_API_SECRET) {
+    // eslint-disable-next-line no-console
+    console.error(`GATSBY_APP_NOTION_DB_ID or GATSBY_APP_NOTION_API_SECRET is not defined!`)
+    return
+  }
+
+  const headers = {
+    headers: {
+      Authorization: `Bearer ${process.env.GATSBY_APP_NOTION_API_SECRET}`,
+      "Notion-Version": "2021-05-13"
+    }
+  }
+  const requestData = {
+    object: "list"
+  }
+
+  const data = await axios
+    .post(
+      `https://api.notion.com/v1/databases/${process.env.GATSBY_APP_NOTION_DB_ID}/query`,
+      requestData,
+      headers
+    )
+    .then(res => res.data.results)
+    .catch(err => {
+      console.error(err)
+      return null
+    })
+
+  if (data) {
+    data
+      .map(page => ({
+        created_at: page.created_time,
+        updated_at: page.last_edited_time,
+        path: page.properties["Path"].url,
+        title: page.properties["Title"].title[0].plain_text,
+        content: page.properties["Content"].rich_text[0].plain_text
+      }))
+      .forEach(page => {
+        const id = createNodeId(`notion-${page.path}`)
+        const type = `NotionPage`
+        const node = {
+          ...page,
+          id,
+          parent: null,
+          children: [],
+          internal: {
+            type,
+            contentDigest: createContentDigest(page.content)
+          }
+        }
+        // create nodes
+        actions.createNode(node)
+      })
   }
 }
