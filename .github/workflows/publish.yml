@@ -8,6 +8,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GATSBY_APP_NOTION_API_SECRET: ${{ secrets.GATSBY_APP_NOTION_API_SECRET }}
+      GATSBY_APP_NOTION_DB_ID: ${{ secrets.GATSBY_APP_NOTION_DB_ID }}
+      GASTBY_APP_GOOGLE_TRACKING_ID: ${{ secrets.GASTBY_APP_GOOGLE_TRACKING_ID }}
     steps:
       - uses: actions/checkout@v1
       - uses: enriikke/gatsby-gh-pages-action@v2
